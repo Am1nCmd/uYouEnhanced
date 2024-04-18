@@ -10,24 +10,29 @@ on:
         default: "16.4"
         required: true
         type: string
-      tweaks_version:
-        description: "Tweaks Version"
-        default: "1.0.0"
-        required: true
-        type: string
       decrypted_ipa_url:
         description: "Direct URL to IPA files"
         default: ""
         required: true
         type: string
-      bundle_id:
-        description: "Change bundleID"
-        required: false
-        type: string
       app_name:
         description: "Change App Name"
         default: ""
         required: false
+        type: string
+      bundle_id:
+        description: "Change bundleID"
+        required: false
+        type: string
+      tweaks_url:
+        description: "Direct URL to Tweaks (.deb / .dylib)"
+        default: ""
+        required: true
+        type: string
+      tweaks_version:
+        description: "Tweaks Version"
+        default: "1.0.0"
+        required: true
         type: string
       create_release:
         description: "Create a draft release"
@@ -46,7 +51,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build uYouEnhanced
+    name: Build Tweaked IPA
     runs-on: macos-latest
     permissions:
       contents: write
@@ -107,10 +112,10 @@ jobs:
         env:
           THEOS: ${{ github.workspace }}/theos
 
-      - name: Prepare YouTube iPA
-        id: prepare_youtube
+      - name: Prepare Tweaked iPA
+        id: prepare_tweaked
         run: |
-          wget "$YOUTUBE_URL" --no-verbose -O main/YouTube.ipa
+          wget "$TWEAKED_URL" --no-verbose -O main/YouTube.ipa
           cd ${{ github.workspace }}/main
           mv YouTube.ipa YouTube.zip
           unzip -q YouTube.zip
