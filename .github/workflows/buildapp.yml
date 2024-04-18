@@ -1,35 +1,33 @@
-# Original idea by @ISnackable. Thanks to him for handling the hardest parts!
-# https://github.com/ISnackable/YTCubePlus/blob/main/.github/workflows/Build.yml
+# Made by @Am1nCmd for universal tweaks injection
 
-name: Build and Release uYouEnhanced
+name: Build and Release Tweaked IPA
 
 on:
   workflow_dispatch:
     inputs:
       sdk_version:
-        description: "iOS SDK version to be used during build"
+        description: "Specify iOS SDK version"
         default: "16.4"
         required: true
         type: string
-      uyou_version:
-        description: "The version of uYou"
-        default: "3.0.3"
+      tweaks_version:
+        description: "Tweaks Version"
+        default: "1.0.0"
         required: true
         type: string
-      decrypted_youtube_url:
-        description: "The direct URL to the decrypted YouTube ipa"
+      decrypted_ipa_url:
+        description: "Direct URL to IPA files"
         default: ""
         required: true
         type: string
       bundle_id:
-        description: "Modify the bundle ID. Not recommended"
-        default: "com.google.ios.youtube"
-        required: true
+        description: "Change bundleID"
+        required: false
         type: string
       app_name:
-        description: "Modify the name of the app on the Home Screen. Not recommended"
-        default: "YouTube"
-        required: true
+        description: "Change App Name"
+        default: ""
+        required: false
         type: string
       create_release:
         description: "Create a draft release"
