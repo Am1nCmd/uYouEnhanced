@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       sdk_version:
-        description: "Specify iOS SDK version"
+        description: "iOS SDK version"
         default: "16.4"
         required: true
         type: string
@@ -21,7 +21,7 @@ on:
         required: false
         type: string
       bundle_id:
-        description: "Change bundleID"
+        description: "Change BundleID"
         required: false
         type: string
       tweaks_url:
@@ -90,7 +90,7 @@ jobs:
       - name: Download iOS SDK
         if: steps.SDK.outputs.cache-hit != 'true'
         run: |
-          git clone --quiet -n --depth=1 --filter=tree:0 https://github.com/arichornlover/sdks/
+          git clone --quiet -n --depth=1 --filter:tree:0 https://github.com/arichornlover/sdks/
           cd sdks
           git sparse-checkout set --no-cone iPhoneOS${{ inputs.sdk_version }}.sdk
           git checkout
@@ -115,34 +115,34 @@ jobs:
       - name: Prepare Tweaked iPA
         id: prepare_tweaked
         run: |
-          wget "$TWEAKED_URL" --no-verbose -O main/YouTube.ipa
+          wget "${{ inputs.decrypted_ipa_url }}" --no-verbose -O main/App.ipa
           cd ${{ github.workspace }}/main
-          mv YouTube.ipa YouTube.zip
-          unzip -q YouTube.zip
-          youtube_version=$(defaults read "$(pwd)/Payload/YouTube.app/Info" CFBundleVersion)
-          echo "==> YouTube v$youtube_version downloaded!"
-          sed -i '' "17s#.*#YOUTUBE_VERSION = ${youtube_version}#g" Makefile
-          echo "youtube_version=${youtube_version}" >> $GITHUB_OUTPUT
+          mv App.ipa App.zip
+          unzip -q App.zip
+          app_version=$(defaults read "$(pwd)/Payload/App.app/Info" CFBundleVersion)
+          echo "==> App v$app_version downloaded!"
+          sed -i '' "17s#.*#APP_VERSION = ${app_version}#g" Makefile
+          echo "app_version=${app_version}" >> $GITHUB_OUTPUT
 
         env:
           THEOS: ${{ github.workspace }}/theos
-          YOUTUBE_URL: ${{ inputs.decrypted_youtube_url }}
+          APP_URL: ${{ inputs.decrypted_ipa_url }}
 
       - name: Fix compiling & Build Package
         id: build_package
         run: |
           cd ${{ github.workspace }}/main
-          sed -i '' "27s#.*#BUNDLE_ID = ${{ env.BUNDLE_ID }}#g" Makefile                          # Modify the bundle ID
-          sed -i '' "26s#.*#DISPLAY_NAME = ${{ env.APP_NAME }}#g" Makefile                        # Modify the app name
+          sed -i '' "27s#.*#BUNDLE_ID = ${{ inputs.bundle_id }}#g" Makefile                          # Modify the bundle ID
+          sed -i '' "26s#.*#DISPLAY_NAME = ${{ inputs.app_name }}#g" Makefile                        # Modify the app name
           sed -i '' "1s#.*#export TARGET = iphone:clang:${{ inputs.sdk_version }}:14.0#g" Makefile # Modify the SDK version
-          make package THEOS_PACKAGE_SCHEME=rootless IPA=Payload/YouTube.app FINALPACKAGE=1
+          make package THEOS_PACKAGE_SCHEME=rootless IPA=Payload/App.app FINALPACKAGE=1
           echo "package=$(ls -t packages | head -n1)" >>$GITHUB_OUTPUT
           echo -e "==> \033[1mSHASUM256: $(shasum -a 256 packages/*.ipa | cut -f1 -d' ')\033[0m"
-          echo -e "==> \033[1mBundle ID: ${{ env.BUNDLE_ID }}\033[0m"
+          echo -e "==> \033[1mBundle ID: ${{ inputs.bundle_id }}\033[0m"
 
         env:
           THEOS: ${{ github.workspace }}/theos
-          UYOU_VERSION: ${{ inputs.uyou_version }}
+          TWEAKS_VERSION: ${{ inputs.tweaks_version }}
           BUNDLE_ID: ${{ inputs.bundle_id }}
           APP_NAME: ${{ inputs.app_name }}
 
@@ -150,10 +150,10 @@ jobs:
         if: ${{ inputs.upload_artifact }}
         uses: actions/upload-artifact@v4.3.1
         env:
-          UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ steps.prepare_youtube.outputs.youtube_version }}
+          TWEAKS_VERSION: ${{ inputs.tweaks_version }}
+          APP_VERSION: ${{ steps.prepare_tweaked.outputs.app_version }}
         with:
-          name: uYouEnhanced_${{ env.YOUTUBE_VERSION }}_${{ env.UYOU_VERSION }}
+          name: tweakedApp_${{ env.APP_VERSION }}_${{ env.TWEAKS_VERSION }}
           path: ${{ github.workspace }}/main/packages/${{ steps.build_package.outputs.package }}
           if-no-files-found: error
 
@@ -162,11 +162,11 @@ jobs:
         uses: softprops/action-gh-release@v2.0.4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          UYOU_VERSION: ${{ inputs.uyou_version }}
-          YOUTUBE_VERSION: ${{ steps.prepare_youtube.outputs.youtube_version }}
+          TWEAKS_VERSION: ${{ inputs.tweaks_version }}
+          APP_VERSION: ${{ steps.prepare_tweaked.outputs.app_version }}
           DRAFT: ${{ inputs.create_release }}
         with:
-          tag_name: v${{ env.YOUTUBE_VERSION }}-${{ env.UYOU_VERSION }}-(${{ github.run_number }})
-          name: v${{ env.YOUTUBE_VERSION }}-${{ env.UYOU_VERSION }}-(${{ github.run_number }})
+          tag_name: v${{ env.APP_VERSION }}-${{ env.TWEAKS_VERSION }}-(${{ github.run_number }})
+          name: v${{ env.APP_VERSION }}-${{ env.TWEAKS_VERSION }}-(${{ github.run_number }})
           files: main/packages/*.ipa
           draft: ${{ env.DRAFT }}
